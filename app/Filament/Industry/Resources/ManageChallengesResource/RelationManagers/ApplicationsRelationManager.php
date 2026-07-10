@@ -48,41 +48,9 @@ class ApplicationsRelationManager extends RelationManager
             ])
             ->actions([
                 \Filament\Actions\ViewAction::make()
-                    ->form([
-                        Forms\Components\TextInput::make('user.name')
-                            ->label('Student Name')
-                            ->disabled(),
-                        Forms\Components\Textarea::make('cover_letter')
-                            ->label('Cover Letter / Submission Notes')
-                            ->disabled()
-                            ->rows(4),
-                        Forms\Components\TextInput::make('submission_url')
-                            ->label('Submission URL')
-                            ->disabled(),
-                    ]),
-
-                Action::make('review')
-                    ->label('Update Status')
-                    ->icon('heroicon-o-pencil')
-                    ->color('primary')
-                    ->form([
-                        Forms\Components\Select::make('status')
-                            ->options([
-                                'pending' => 'Pending',
-                                'reviewing' => 'Reviewing',
-                                'accepted' => 'Accepted',
-                                'rejected' => 'Rejected',
-                            ])
-                            ->required(),
-                    ])
-                    ->action(function (ChallengeApplication $record, array $data) {
-                        $record->update(['status' => $data['status']]);
-
-                        Notification::make()
-                            ->title('Application status updated!')
-                            ->success()
-                            ->send();
-                    }),
+                    ->label('Review')
+                    ->icon('heroicon-o-document-magnifying-glass')
+                    ->url(fn (ChallengeApplication $record) => \App\Filament\Industry\Resources\ChallengeApplicationResource::getUrl('view', ['record' => $record], panel: 'industry')),
             ])
             ->bulkActions([
                 //

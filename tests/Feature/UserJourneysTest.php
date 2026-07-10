@@ -19,8 +19,12 @@ use App\Filament\Industry\Resources\ManageChallengesResource\Pages\CreateChallen
 use App\Filament\Industry\Resources\ManageChallengesResource\Pages\ListChallenges;
 use App\Filament\Industry\Resources\ManageChallengesResource\Pages\EditChallenge;
 use App\Filament\Industry\Resources\ManageChallengesResource\RelationManagers\ApplicationsRelationManager;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\NewChallengeApplicationMail;
 
 beforeEach(function () {
+    Mail::fake();
+    
     // Seed essential lookups
     $this->state = State::create(['name' => 'LagosState']);
     $this->lga = Lga::create(['state_id' => $this->state->id, 'name' => 'Ikeja']);
@@ -42,12 +46,14 @@ test('student can build profile and showcase skills', function () {
 
     Livewire::actingAs($student)
         ->test(EditProfile::class)
+        ->set('isEditing', true)
         ->fillForm([
             'bio' => 'Passionate student coder.',
             'university_id' => $this->university->id,
             'matric_no' => 'MAT123',
+            'department' => 'Computer Science',
             'graduation_year' => 2027,
-            'gpa' => 4.50,
+            'cgpa' => 4.50,
             'state_id' => $this->state->id,
             'lga_id' => $this->lga->id,
             'skills' => [
@@ -62,7 +68,7 @@ test('student can build profile and showcase skills', function () {
 
     expect($student->profile->bio)->toBe('Passionate student coder.');
     expect($student->profile->university_id)->toBe($this->university->id);
-    expect($student->profile->gpa)->toEqual(4.50);
+    expect($student->profile->cgpa)->toEqual(4.50);
     expect($student->skills)->toHaveCount(2);
     expect($student->skills->pluck('name'))->toContain('PHP', 'Laravel');
 });
@@ -157,6 +163,9 @@ test('industry can post challenges and review applicants', function () {
             'reward' => '$500',
             'deadline' => now()->addDays(5)->toDateString(),
             'status' => 'active',
+            'type' => 'Internship',
+            'location' => 'Remote',
+            'duration' => '3 months',
         ])
         ->call('create')
         ->assertHasNoFormErrors();
@@ -188,4 +197,43 @@ test('industry can post challenges and review applicants', function () {
 
     $application->refresh();
     expect($application->status)->toBe('accepted');
+});
+
+test('student application sends email and database notification to industry user', function () {
+    $student = User::factory()->create(['role' => UserRole::Student]);
+    $industryUser = User::factory()->create(['role' => UserRole::Industry]);
+    
+    $company = $industryUser->company;
+    $challenge = Challenge::create([
+        'company_id' => $company->id,
+        'title' => 'Hackathon 2026',
+        'description' => 'Build a cool project',
+        'reward' => '$1000',
+        'status' => 'active',
+        'deadline' => now()->addDays(10),
+        'type' => 'Internship',
+        'location' => 'Remote',
+        'duration' => '3 months',
+    ]);
+
+    // Apply to challenge
+    $application = ChallengeApplication::create([
+        'challenge_id' => $challenge->id,
+        'user_id' => $student->id,
+        'cover_letter' => 'I would love to build this.',
+        'submission_url' => 'https://github.com/mysolution',
+        'submitted_at' => now(),
+        'status' => 'pending',
+    ]);
+
+    // Assert email was sent to industry user
+    Mail::assertSent(NewChallengeApplicationMail::class, function ($mail) use ($industryUser, $application) {
+        return $mail->hasTo($industryUser->email) && $mail->application->id === $application->id;
+    });
+
+    // Assert database notification exists for industry user
+    $notification = $industryUser->notifications()->first();
+    expect($notification)->not->toBeNull();
+    expect($notification->data['title'])->toContain('New Opportunity Application');
+    expect($notification->data['body'])->toContain($student->name);
 });

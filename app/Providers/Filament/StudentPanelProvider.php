@@ -25,6 +25,7 @@ class StudentPanelProvider extends PanelProvider
     {
         return $panel
             ->id('student')
+            ->databaseNotifications()
             ->path('student')
             ->sidebarFullyCollapsibleOnDesktop()
             ->sidebarWidth('15rem')

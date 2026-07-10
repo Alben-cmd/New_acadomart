@@ -25,6 +25,7 @@ class IndustryPanelProvider extends PanelProvider
     {
         return $panel
             ->id('industry')
+            ->databaseNotifications()
             ->sidebarFullyCollapsibleOnDesktop()
             ->sidebarWidth('15rem')
             ->path('industry')
