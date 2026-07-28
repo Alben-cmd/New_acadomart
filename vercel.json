@@ -22,5 +22,5 @@
             "destination": "/api/lambda.php"
         }
     ],
-    "buildCommand": "npm run build"
+    "buildCommand": "echo skip..."
 }
