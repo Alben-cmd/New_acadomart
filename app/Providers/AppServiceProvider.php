@@ -9,6 +9,10 @@ use Filament\Auth\Http\Responses\Contracts\RegistrationResponse as RegistrationR
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Schema;
 
+use Illuminate\Support\Facades\Storage;
+use League\Flysystem\Filesystem;
+use App\Filesystem\VercelBlobAdapter;
+
 class AppServiceProvider extends ServiceProvider
 {
     /**
@@ -26,5 +30,16 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void 
     {
         Schema::defaultStringLength(191);
+
+        Storage::extend('vercel-blob', function ($app, $config) {
+            $token = $config['token'] ?? env('BLOB_READ_WRITE_TOKEN');
+            $adapter = new VercelBlobAdapter($token);
+            
+            return new \Illuminate\Filesystem\FilesystemAdapter(
+                new Filesystem($adapter),
+                $adapter,
+                $config
+            );
+        });
     }
 }

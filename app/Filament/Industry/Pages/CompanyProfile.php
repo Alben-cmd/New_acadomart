@@ -53,7 +53,7 @@ class CompanyProfile extends Page implements HasForms
                             ->schema([
                                 Placeholder::make('logo_path')
                                     ->label('Logo')
-                                    ->content(fn () => ($company?->logo_path && \Illuminate\Support\Facades\Storage::disk('public')->exists($company->logo_path)) ? new \Illuminate\Support\HtmlString('<img src="/storage/' . $company->logo_path . '" class="w-20 h-20 object-contain rounded-lg" style="width: 80px; height: 80px;" />') : 'No Logo')
+                                    ->content(fn () => ($company?->logo_path && \Illuminate\Support\Facades\Storage::disk('public')->exists($company->logo_path)) ? new \Illuminate\Support\HtmlString('<img src="' . \Illuminate\Support\Facades\Storage::disk('public')->url($company->logo_path) . '" class="w-20 h-20 object-contain rounded-lg" style="width: 80px; height: 80px;" />') : 'No Logo')
                                     ->columnSpan(2),
                                 Placeholder::make('name')
                                     ->label('Company Name')

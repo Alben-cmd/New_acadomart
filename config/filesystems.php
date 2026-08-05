@@ -39,10 +39,11 @@ return [
         ],
 
         'public' => [
-            'driver' => 'local',
+            'driver' => env('PUBLIC_FILESYSTEM_DRIVER', env('BLOB_READ_WRITE_TOKEN') ? 'vercel-blob' : 'local'),
             'root' => storage_path('app/public'),
-            'url' => rtrim(env('APP_URL', 'http://localhost'), '/').'/storage',
+            'url' => env('PUBLIC_FILESYSTEM_URL', env('BLOB_READ_WRITE_TOKEN') ? null : rtrim(env('APP_URL', 'http://localhost'), '/').'/storage'),
             'visibility' => 'public',
+            'token' => env('BLOB_READ_WRITE_TOKEN'),
             'throw' => false,
             'report' => false,
         ],
